@@ -1,0 +1,85 @@
+{% extends "curingapp/base.html" %}
+{% load crispy_forms_tags %}
+
+{% block formcontent %}
+<html>
+
+<head>
+    <title>Schedule Curing Form</title>
+</head>
+
+<body>
+    <h1>Schedule Curing Form</h1>
+    <form method="post">
+        {% csrf_token %}
+
+        <div class="form-group {% if form.Project.errors %}has-error{% endif %}">
+            <label for="projectSelect">Project:</label>
+            <select id="projectSelect" name="Project" class="form-control" onclick=updateSiteOptions()>
+                {% for project in form.Project.field.queryset %}
+                    <option value="{{ project.Project_ID }}" {% if project.Project_ID == user.Project.Project_ID %} selected {% endif %}>
+                        {{ project.Project_Name }}
+                    </option>
+                {% endfor %}
+            </select>
+            {% if form.Project.errors %}
+                <span class="help-block">{{ form.Project.errors }}</span>
+            {% endif %}
+        </div>
+
+        <div class="form-group">
+            <label for="siteSelect">Site:</label>
+            <select id="siteSelect" name="Site" class="form-control" >
+              {% for site in form.Site.field.queryset %}
+              <option value="{{ site.Site_ID }}" {% if site.Site_ID == user.Site.Site_ID %} selected {% endif %}>
+                  {{ site.Site_Name }}
+              </option>
+              {% endfor %}
+            </select>
+            {% if form.Site.errors %}
+                <span class="help-block">{{ form.Site.errors }}</span>
+            {% endif %}
+          </div>
+        <div class="form-group">
+            <label for="{{ form.Structural_Element.id_for_label }}">Structural Element:</label>
+            {{ form.Structural_Element | as_crispy_field }}
+        </div>
+
+        <div class="form-group">
+            <label for="{{ form.Schedule_Date_and_Time.id_for_label }}">Schedule Date and Time:</label>
+            {{ form.Schedule_Date_and_Time | as_crispy_field }}
+        </div>
+        <button type="submit" class="btn btn-primary">Start Schedule</button>
+        <a href="{% url 'home' %}" class="btn btn-primary">Back</a>
+    </form>
+    <p id="funcdemo"></p>
+    <script>
+        function updateSiteOptions() {
+            var projectId = document.getElementById("projectSelect").value;
+            var siteSelect = document.getElementById("siteSelect");
+            var siteOptions = [
+                // Placeholder option
+                '<option value="" disabled selected>Select a Site</option>'
+            ];
+
+            // Fetch sites for the selected project using an API endpoint
+            fetch(`/get_sites_for_project/${projectId}/`)
+                .then(response => response.json())
+                .then(data => {
+                    data.sites.forEach(site => {
+                        // Append site options to the list
+                        siteOptions.push(`<option value="${site.id}">${site.name}</option>`);
+                    });
+
+                    // Set the innerHTML of the site dropdown to update options
+                    siteSelect.innerHTML = siteOptions.join('');
+                });
+        }
+
+        // Initial call to populate site options based on the default selection
+        updateSiteOptions();
+    </script>
+</body>
+
+</html>
+{% endblock %}

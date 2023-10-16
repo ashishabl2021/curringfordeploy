@@ -1,0 +1,432 @@
+{% extends "curingapp/base.html" %}
+
+{% load static %}
+
+{% block formcontent %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <style>
+    /* You can also set a maximum width for the header cells to prevent excessive stretching */
+    .table thead th {
+      max-width: 150px;
+      white-space: normal;
+      /* Adjust the value as needed */
+    }
+
+    .table tbody td {
+      white-space: normal;
+      /* Adjust the value as needed */
+    }
+
+    .table-responsive {
+      overflow-x: auto;
+      /* Enable horizontal scrolling */
+    }
+
+
+    /* Optionally, you can set a minimum width for the table to make it scrollable */
+    .table {
+      min-width: 450px;
+      /* Adjust the value as needed */
+    }
+
+    /* Modal styles */
+
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0, 0, 0, 0.7);
+      /* Semi-transparent background */
+    }
+
+    .modal-content {
+      background-color: #fefefe;
+      margin: auto;
+      padding: 20px;
+      border: 1px solid #888;
+      width: 50%;
+      /* Adjust the width as needed */
+      text-align: center;
+      position: absolute;
+      top: 50%;
+      /* Center the content vertically */
+      left: 50%;
+      /* Center the content horizontally */
+      transform: translate(-50%, -50%);
+      /* Center the content both vertically and horizontally */
+
+      /* Add a fixed height and enable vertical scrolling */
+      height: 400px;
+      /* Adjust the height as needed */
+      overflow-y: scroll;
+      /* Enable vertical scrolling when content overflows */
+    }
+
+    @media (max-width: 768px) {
+      .modal-content {
+        width: 90%;
+        /* Adjust the width as needed for mobile */
+        font-size: 16px;
+        /* Increase font size for better readability on mobile */
+        padding: 10px;
+        /* Add some padding for better spacing on mobile */
+        overflow-y: scroll;
+      }
+    }
+
+    /* Close button styles (if needed) */
+    .close {
+      position: absolute;
+      right: 15px;
+      top: 15px;
+      font-size: 24px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .image-list-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      /* Space between columns */
+    }
+
+    .curing-image {
+      width: calc(30% - 10px);
+      /* 50% width for two columns with some spacing */
+      height: auto;
+      /* Maintain aspect ratio */
+      margin-bottom: 10px;
+      /* Adjust spacing between rows */
+      box-sizing: border-box;
+      /* Include padding and border in the width */
+    }
+
+    .video-flip {
+      transform: scaleX(-1);
+      -webkit-transform: scaleX(-1);
+      transform-origin: center;
+      -webkit-transform-origin: center;
+    }
+
+    .captured-image {
+      transform: scaleX(-1);
+      -webkit-transform: scaleX(-1);
+      transform-origin: center;
+      -webkit-transform-origin: center;
+      width: 200px;
+      /* Change to your desired width */
+      height: 150px;
+      /* Change to your desired height */
+    }
+
+    .cam-live {
+      width: 200px;
+      /* Change to your desired width */
+      height: 150px;
+    }
+  </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Schedule Curing Table</title>
+</head>
+
+<body>
+  <h1>Schedule Curing Table</h1>
+  <h2>Transaction Concreting Information</h2>
+  <p>Transaction ID: {{ transaction.Transaction_Concreting_ID }}</p>
+  <p>Project: {{ transaction.Project }}</p>
+  <p>Site: {{ transaction.Site }}</p>
+  <p>Structural Element: {{ transaction.Structural_Element }}</p>
+
+  <h2>Curing Schedule Entries</h2>
+
+  <div class="table-responsive">
+    <table class="table table-striped table-bordered">
+      <thead>
+        <tr>
+          <th scope="col" class="custom-width">Schedule Entry ID</th>
+          <th scope="col">Schedule Date and Time</th>
+          <!-- <th scope="col">Image</th>
+          <th scope="col">Uploaded Photos</th> -->
+        </tr>
+      </thead>
+      <tbody>
+        {% for schedule_entry in schedules %}
+        <tr>
+          <td>{{ schedule_entry.Schedule_Curing_ID }}
+            {% if schedule_entry.Image_Of_Curing %}
+            <img src="{{ schedule_entry.Image_Of_Curing.url }}" alt="Curing Image" class="curing-image">
+            {% else %}
+            <form method="post" enctype="multipart/form-data" class="upload-form"
+              data-schedule-id="{{ schedule_entry.Schedule_Curing_ID }}">
+              {% csrf_token %}
+              <input type="hidden" name="schedule_entry_id" value="{{ schedule_entry.Schedule_Curing_ID }}">
+              <div id="cam-controls-{{ schedule_entry.Schedule_Curing_ID }}">
+                <div id="cam-snaps-{{ schedule_entry.Schedule_Curing_ID }}"></div>
+                <video class="cam-live" id="cam-live-{{ schedule_entry.Schedule_Curing_ID }}" autoplay></video><br>
+                <input type="button" id="cam-open-{{ schedule_entry.Schedule_Curing_ID }}" class="material-icons"
+                  value="photo_camera" onclick="webcam.open('{{ schedule_entry.Schedule_Curing_ID }}')">
+                <!-- <input type="button" id="cam-take-{{ schedule_entry.Schedule_Curing_ID }}" class="material-icons"
+                value="camera" onclick="webcam.take('{{ schedule_entry.Schedule_Curing_ID }}')" disabled>
+              <input type="button" id="cam-save-{{ schedule_entry.Schedule_Curing_ID }}" class="material-icons"
+                value="download" onclick="webcam.save('{{ schedule_entry.Schedule_Curing_ID }}')" disabled> -->
+                <input type="button" id="cam-upload-{{ schedule_entry.Schedule_Curing_ID }}" class="material-icons"
+                  value="upload"
+                  onclick="webcam.upload('{{ schedule_entry.Schedule_Curing_ID }}', projectID,siteID,'{{ schedule_entry.Schedule_Date_and_Time}}')"
+                  disabled>
+                <!-- <input type="button" id="cam-upload-{{ schedule_entry.Schedule_Curing_ID }}" class="material-icons" value="upload" onclick='webcam.upload("{{ schedule_entry.Schedule_Curing_ID }}", "{{ projectID }}", "{{ siteID }}", "{{ schedule_entry.Schedule_Date_and_Time|date:"-dmYHi-"}}")' disabled> -->
+              </div>
+            </form>
+            {% endif %}
+
+          </td>
+          <td>{{ schedule_entry.Schedule_Date_and_Time|date:"d/m/Y, h:i A" }}
+
+            <div style="margin-top: 50px;">
+              <button class="show-schedule-button" data-schedule-id="{{ schedule_entry.Schedule_Curing_ID }}">View
+                Photo</button>
+            </div>
+
+          </td>
+
+          {% endfor %}
+
+      </tbody>
+    </table>
+  </div>
+  <div id="scheduleModal" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <p><strong>Schedule Entry ID:</strong> <span id="scheduleEntryID"></span></p>
+      <div id="imageListContainer">
+        {% for image_file in image_files %}
+        <img src="{% static 'curing_images/' %}{{ image_file }}" alt="Image">
+        {% empty %}
+        <p>No images available.</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Include the script here -->
+  <script>
+    // var scheduleDateAndTime = "{{ schedule_entry.Schedule_Date_and_Time|date:'YmdHis' }}";
+    var transactionID = "{{ transaction.Transaction_Concreting_ID }}"
+    var projectID = "{{ transaction.Project.Project_ID }}";
+    var siteID = "{{ transaction.Site.Site_ID }}";
+    var structuralelementID = "{{ transaction.Structural_Element.Structural_Element_ID }}"
+
+
+    var webcam = {
+      // (A) INITIALIZE - GET USER PERMISSION TO ACCESS CAMERA
+      hVid: null,
+      hSnaps: null,
+      cameraOpen: false,
+      open: (scheduleID) => {
+        if (!webcam.cameraOpen) {
+          navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => {
+              // Update the camera state flag
+              webcam.cameraOpen = true;
+              // (A1) GET HTML ELEMENTS
+              webcam.hVid = document.getElementById(`cam-live-${scheduleID}`);
+              webcam.hSnaps = document.getElementById(`cam-snaps-${scheduleID}`);
+
+              // (A2) "LIVE FEED" WEB CAM TO <VIDEO>
+              webcam.hVid.srcObject = stream;
+              webcam.hVid.classList.add('video-flip'); // Add the video-flip class to flip the video
+
+              // (A3) ENABLE BUTTONS
+              // document.getElementById(`cam-take-${scheduleID}`).disabled = false;
+              // document.getElementById(`cam-save-${scheduleID}`).disabled = false;
+              document.getElementById(`cam-upload-${scheduleID}`).disabled = false;
+            })
+            .catch(err => console.error(err));
+        } else {
+          // Close the camera
+          webcam.hVid.srcObject = null;
+          webcam.cameraOpen = false;
+
+          // Disable buttons
+          // document.getElementById(`cam-take-${scheduleID}`).disabled = true;
+          // document.getElementById(`cam-save-${scheduleID}`).disabled = true;
+          document.getElementById(`cam-upload-${scheduleID}`).disabled = true;
+        }
+      },
+      // (B) SNAP VIDEO FRAME TO CANVAS
+      snap: (scheduleID) => {
+        // (B1) CREATE NEW CANVAS
+        let cv = document.createElement("canvas"),
+          cx = cv.getContext("2d");
+
+        // (B2) CAPTURE VIDEO FRAME TO CANVAS
+        cv.width = webcam.hVid.videoWidth;
+        cv.height = webcam.hVid.videoHeight;
+        cx.drawImage(webcam.hVid, 0, 0, webcam.hVid.videoWidth, webcam.hVid.videoHeight);
+
+        // (B3) DONE
+        return cv;
+      },
+      // (C) PUT SNAPSHOT INTO <DIV> WRAPPER
+      take: (scheduleID) => {
+        // (C1) CREATE NEW CANVAS
+        let cv = webcam.snap(scheduleID);
+
+        // (C2) APPEND SNAPSHOT TO SPECIFIC <DIV> WRAPPER
+        let snapsDiv = document.getElementById(`cam-snaps-${scheduleID}`);
+        snapsDiv.appendChild(cv);
+        cv.classList.add('captured-image');
+
+      },
+
+      // (D) FORCE DOWNLOAD SNAPSHOT
+      save: (scheduleID) => {
+        // (D1) TAKE A SNAPSHOT, CREATE DOWNLOAD LINK
+        let cv = webcam.snap(),
+          a = document.createElement("a");
+        a.href = cv.toDataURL("image/png");
+        a.download = `${scheduleID}.png`; // Use a custom name with the scheduleID
+
+        // (D2) "FORCE DOWNLOAD" - MAY NOT ALWAYS WORK!
+        a.click();
+        a.remove();
+        cv.remove();
+
+        // (D3) SAFER - LET USERS MANUAL CLICK
+        // webcam.hSnaps.appendChild(a);
+        a.classList.add('downloaded-image');
+      },
+
+      // (E) UPLOAD SNAPSHOT TO SERVER
+      upload: (scheduleID, projectID, siteID, date_and_time) => {
+        // (E1) GET THE CUSTOM IMAGE NAME
+        // let imageName = `${projectID}_${siteID}_${scheduleID}`;
+        let imageName = `${scheduleID}`;
+
+        // (E2) CHECK IF THE NAME IS EMPTY
+        if (!imageName) {
+          alert("Please enter an image name.");
+          return;
+        }
+
+        // (E3) APPEND SCREENSHOT TO DATA OBJECT  
+        var data = new FormData();
+        var snapCanvas = webcam.snap(scheduleID);
+
+        snapCanvas.toBlob(function (blob) {
+          data.append("snap", blob, imageName + ".png"); // Use the custom name here
+
+
+          // Data send To Server 
+          data.append("projectID", projectID); // Include the projectID in the FormData
+          data.append("siteID", siteID); // Include the siteID in the FormData
+          data.append("transactionID", transactionID); // Include the transactionID in the FormData
+          data.append("structuralelementID", structuralelementID);
+          data.append("scheduleID", scheduleID);
+          data.append("date_and_time", date_and_time);
+
+          // (E4) UPLOAD SCREENSHOT TO SERVER
+          fetch("/upload_image/", { method: "post", body: data })
+            .then(res => res.json())
+            .then(data => alert(data.message))
+            .catch(err => console.error(err));
+        }, "image/png");
+      },
+
+    };
+
+    window.addEventListener("load", webcam.init);
+
+    // Function to display the modal with the Schedule Entry ID
+    function displayScheduleModal(scheduleID) {
+      const modal = document.getElementById("scheduleModal");
+      const scheduleEntryID = document.getElementById("scheduleEntryID");
+      const imageListContainer = document.getElementById("imageListContainer"); // Create a container for the image list
+
+      // Set the Schedule Entry ID in the modal content
+      scheduleEntryID.textContent = scheduleID;
+
+      // Fetch the list of image files from the server
+      fetch('/get_image_list/')
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Network response was not ok');
+          }
+          return response.json(); // Parse the JSON response
+        })
+        .then(data => {
+          // Handle the JSON data here
+          // console.log(data);
+
+          // Example: Display images
+          if (data && data.image_files) {
+            // Clear the container
+            imageListContainer.innerHTML = '';
+
+            // Loop through the image files and create <img> elements
+            data.image_files.forEach(image => {
+              // Check if the image name matches the schedule ID
+              if (image.startsWith(scheduleID)) {
+                const img = document.createElement('img');
+                img.src = "{% static 'curing_images/' %}" + image;
+                img.alt = 'Image';
+                img.className = 'curing-image'; // Add any desired CSS classes
+                imageListContainer.appendChild(img); // Append the <img> tag to the container
+              }
+            });
+
+            // If no matching images were found, display a message
+            if (imageListContainer.children.length === 0) {
+              imageListContainer.innerHTML = '<p>No images available.</p>';
+            }
+          } else {
+            imageListContainer.innerHTML = '<p>No images available all </p>';
+          }
+        })
+        .catch(error => {
+          // Handle errors
+          console.error('Fetch error:', error);
+        });
+
+      // Display the modal
+      modal.style.display = "block";
+    }
+    // Event listener for the "xyz" buttons
+    document.addEventListener("click", function (e) {
+      if (e.target && e.target.classList.contains("show-schedule-button")) {
+        const scheduleID = e.target.getAttribute("data-schedule-id");
+        displayScheduleModal(scheduleID);
+      }
+    });
+
+    // Close the modal when the close button is clicked
+    const closeButton = document.querySelector(".close");
+    closeButton.addEventListener("click", function () {
+      const modal = document.getElementById("scheduleModal");
+      modal.style.display = "none";
+    });
+
+    // Close the modal when clicking outside of it
+    window.addEventListener("click", function (e) {
+      const modal = document.getElementById("scheduleModal");
+      if (e.target == modal) {
+        modal.style.display = "none";
+      }
+    });
+  </script>
+</body>
+
+</html>
+
+{% endblock %}
+
+<!-- ################################################################### -->

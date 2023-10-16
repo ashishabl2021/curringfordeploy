@@ -1,0 +1,101 @@
+{% extends 'curingapp/base.html' %}
+{% load crispy_forms_tags %}
+
+{% block formcontent %}
+{% if isAdmin %}
+<h2>Edit User</h2>
+<form method="post">
+  {% csrf_token %}
+
+  <div class="form-group">
+    <label for="{{ form.Username.id_for_label }}"></label>
+    {{ form.username|as_crispy_field }}
+  </div>
+    <div class="form-group">
+    <label for="{{ form.Email.id_for_label }}"></label>
+    {{ form.email|as_crispy_field }}
+  </div>
+  <div class="form-group">
+    <label for="{{ form.Contact_no.id_for_label }}"></label>
+    {{ form.Contact_no|as_crispy_field }}
+  </div>
+
+  <div class="form-group">
+    <label for="{{ form.is_user.id_for_label }}"></label>
+    {{ form.is_user|as_crispy_field }}
+  </div>
+  <div class="form-group">
+    <label for="{{ form.is_Administrator.id_for_label }}"></label>
+    {{ form.is_Administrator|as_crispy_field }}
+  </div>
+
+  <select id="projectSelect" name="Project" class="form-control" onchange="updateSiteOptions()">
+    {% for project in form.Project.field.queryset %}
+        <option value="{{ project.Project_ID }}" {% if project.Project_ID == user.Project.Project_ID %} selected {% endif %}>
+            {{ project.Project_Name }}
+        </option>
+    {% endfor %}
+</select>
+
+  <div class="form-group">
+    <label for="siteSelect">Site:</label>
+    <select id="siteSelect" name="Site" class="form-control" >
+      {% for site in form.Site.field.queryset %}
+      <option value="{{ site.Site_ID }}" {% if site.Site_ID == user.Site.Site_ID %} selected {% endif %}>
+          {{ site.Site_Name }}
+      </option>
+      {% endfor %}
+    </select>
+    {% if form.Site.errors %}
+        <span class="help-block">{{ form.Site.errors }}</span>
+    {% endif %}
+  </div>
+
+  {{ form.errors }}
+
+  <button type="submit" class="btn btn-primary">Save Changes</button>
+  <a href="{% url 'register_user' %}" class="btn btn-primary">Cancel</a>
+</form>
+
+<script>
+  function updateSiteOptions() {
+      var projectId = document.getElementById("projectSelect").value;
+      var siteSelect = document.getElementById("siteSelect");
+      
+      // Clear existing options
+      siteSelect.innerHTML = '';
+
+      // Placeholder option
+      var siteOptions = [
+          '<option value="" disabled selected>Select Site</option>'
+      ];
+
+      // Fetch sites for the selected project using an API endpoint
+      fetch(`/get_sites_for_project/${projectId}/`)
+          .then(response => response.json())
+          .then(data => {
+              data.sites.forEach(site => {
+                  // Append site options to the list
+                  siteOptions.push(`<option value="${site.id}">${site.name}</option>`);
+              });
+              
+              // Set the innerHTML of the site dropdown to update options
+              siteSelect.innerHTML = siteOptions.join('');
+
+              // Set the initially assigned site as selected
+              var initiallyAssignedSiteId = "{{ user.Site.id }}"; // Replace with the actual user's assigned site ID
+              if (initiallyAssignedSiteId) {
+                  siteSelect.value = initiallyAssignedSiteId;
+              }
+          });
+  }
+
+  // Initial call to populate site options based on the default selection
+
+</script>
+{% else %}
+    <!-- Content for users who are not authenticated -->
+    <p>You are not Authorized</p>
+{% endif %}
+
+{% endblock %}

@@ -1,0 +1,59 @@
+{% extends "curingapp/base.html" %}
+{% load crispy_forms_tags %}
+{% block content %}
+<style>
+  .jumbotron {
+    margin-top: 50px;
+  }
+
+  @media (max-width: 768px) {
+
+    /* Adjust the styles for smaller screens */
+    .jumbotron {
+      width: 100%;
+      /* Example: Reduce the width for small screens */
+      margin: 20% auto;
+      /* Center the jumbotron horizontally */
+    }
+
+    /* You can add more styles for smaller screens here */
+  }
+</style>
+<div class="container">
+  <div class='jumbotron'>
+    <div class="text-center">
+      <h2
+        style="color:darkcyan;font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;">
+        Welcome to Ashoka Buildcon Limited </h2>
+    </div>
+    <form method="post" id="loginform">
+      {% csrf_token %}
+      <br>
+      <div class="col-12 mx-auto">
+        <div class="form-group">
+          <label for="exampleInputEmail1" class="form-lable">Username</label>
+          <input type="input" name="username" class="form-control" id="exampleInputEmail1" aria-describedby="email">
+        </div>
+        <div class="form-group">
+          <label for="exampleInputPassword" class="form-lable">Password</label>
+          <input type="password" name="password" class="form-control" id="exampleInputPassword1">
+        </div>
+        <button class="btn btn-primary mt-3">Login</button>
+    </form>
+  </div>
+</div>
+{% if messages %}
+<div class="alert alert-success mt-3" role="alert">
+  {% for message in messages %}
+  {{ message }}
+  {% endfor %}
+</div>
+{% endif %}
+
+</div>
+<p class="text-center"
+  style="font-size: large;font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;">
+  This is for internal use only</p>
+</div>
+</div>
+{% endblock %}

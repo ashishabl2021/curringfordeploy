@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Webcam Capture Demo</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- https://fonts.google.com/icons -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+
+</head>
+<body>
+<!-- (A) VIDEO LIVE FEED -->
+<video id="cam-live" autoplay></video>
+
+<!-- (B) CONTROLS -->
+<div id="cam-controls">
+    <input type="button" id="cam-take" class="material-icons"
+           value="photo_camera" onclick="webcam.take()" disabled>
+    <input type="button" id="cam-save" class="material-icons"
+           value="download" onclick="webcam.save()" disabled>
+    <input type="button" id="cam-upload" class="material-icons" 
+           value="upload" onclick="webcam.upload()" disabled>
+</div>
+
+<!-- (C) SNAPSHOTS -->
+<div id="cam-snaps"></div>
+
+<script>
+ var webcam = {
+  // (A) INITIALIZE - GET USER PERMISSION TO ACCESS CAMERA
+  hVid: null,
+  hSnaps: null,
+  init: () => {
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then(stream => {
+        // (A1) GET HTML ELEMENTS
+        webcam.hVid = document.getElementById("cam-live"),
+        webcam.hSnaps = document.getElementById("cam-snaps");
+
+        // (A2) "LIVE FEED" WEB CAM TO <VIDEO>
+        webcam.hVid.srcObject = stream;
+
+        // (A3) ENABLE BUTTONS
+        document.getElementById("cam-take").disabled = false;
+        document.getElementById("cam-save").disabled = false;
+        document.getElementById("cam-upload").disabled = false;
+      })
+      .catch(err => console.error(err));
+  },
+
+  // (B) SNAP VIDEO FRAME TO CANVAS
+  snap: () => {
+    // (B1) CREATE NEW CANVAS
+    let cv = document.createElement("canvas"),
+      cx = cv.getContext("2d");
+
+    // (B2) CAPTURE VIDEO FRAME TO CANVAS
+    cv.width = webcam.hVid.videoWidth;
+    cv.height = webcam.hVid.videoHeight;
+    cx.drawImage(webcam.hVid, 0, 0, webcam.hVid.videoWidth, webcam.hVid.videoHeight);
+
+    // (B3) DONE
+    return cv;
+  },
+
+  // (C) PUT SNAPSHOT INTO <DIV> WRAPPER
+  take: () => webcam.hSnaps.appendChild(webcam.snap()),
+
+  // (D) FORCE DOWNLOAD SNAPSHOT
+  save: () => {
+    // (D1) TAKE A SNAPSHOT, CREATE DOWNLOAD LINK
+    let cv = webcam.snap(),
+      a = document.createElement("a");
+    a.href = cv.toDataURL("image/png");
+    a.download = "snap.png";
+
+    // (D2) "FORCE DOWNLOAD" - MAY NOT ALWAYS WORK!
+    a.click();
+    a.remove();
+    cv.remove();
+
+    // (D3) SAFER - LET USERS MANUAL CLICK
+    // webcam.hSnaps.appendChild(a);
+  },
+
+  // (E) UPLOAD SNAPSHOT TO SERVER
+  upload: () => {
+    // (E1) APPEND SCREENSHOT TO DATA OBJECT
+    var data = new FormData();
+    var snapCanvas = webcam.snap();
+    snapCanvas.toBlob(function (blob) {
+      data.append("snap", blob, "snap.png");
+      
+      // (E2) UPLOAD SCREENSHOT TO SERVER
+      fetch("/upload_image/", { method: "post", body: data })
+        .then(res => res.json())
+        .then(data => alert(data.message))
+        .catch(err => console.error(err));
+    }, "image/png");
+  }
+};
+window.addEventListener("load", webcam.init);
+</script>
+</body>
+</html>

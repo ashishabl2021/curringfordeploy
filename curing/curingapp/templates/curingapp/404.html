@@ -1,0 +1,6 @@
+{% if debug %}
+<p><strong>URL:</strong> {{ request_path }}</p>
+<p><strong>View:</strong> {{ request.resolver_match.func.__name__ }}()</p>
+<p><strong>Arguments:</strong> {{ request.resolver_match.args }}</p>
+<p><strong>Keyword arguments:</strong> {{ request.resolver_match.kwargs }}</p>
+{% endif %}

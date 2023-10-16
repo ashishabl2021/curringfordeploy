@@ -1,0 +1,38 @@
+.custom-hr {
+    margin-top: 0;
+    margin-bottom: 0;
+    border-top: 1px solid #000000;
+
+}
+
+.center-text {
+    text-align: center;
+}
+
+.bg-color {
+    background-color: #e3f4f5 !important;
+}
+
+table {
+        width: 100%;
+        table-layout: fixed;
+    }
+
+th, td {
+        word-wrap: break-word;
+        max-width: 200px; /* Adjust the max-width value as per your requirement */
+    }
+
+.row-center .form-check {
+        display: inline-block;
+        margin-right: 20px; /* Adjust this value as needed to control the spacing between radio buttons */
+    }
+
+.horizontal-radio {
+        display: flex; /* Use flexbox to arrange radio buttons horizontally */
+      }
+      
+      /* Optional: Add some spacing between radio buttons */
+.horizontal-radio input[type="radio"] + label {
+        margin-right: 10px;
+      }

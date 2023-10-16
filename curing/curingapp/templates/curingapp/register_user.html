@@ -1,0 +1,174 @@
+{% extends 'curingapp/base.html' %}
+{% load crispy_forms_tags %}
+
+{% block formcontent %}
+{% if messages %}
+<div class="alert alert-success mt-3" role="alert">
+  {% for message in messages %}
+  {{ message }}
+  {% endfor %}
+</div>
+{% endif %}
+{% if isAdmin %}
+
+
+<style>
+  td {
+  white-space: normal !important; 
+  word-wrap: break-word;  
+}
+</style>
+<h5>Register User </h5>
+<form method="POST">
+  {% csrf_token %}
+  <div>
+    <!-- fields = ['password1', 'password2'] -->
+
+    <div class="form-group">
+      <label for="{{ form.Username.id_for_label }}"></label>
+      {{ form.username|as_crispy_field }}
+    </div>
+    
+    <div class="form-group">
+      <label for="{{ form.Email.id_for_label }}"></label>
+      {{ form.email|as_crispy_field }}
+    </div>
+  
+  
+    <div class="form-group">
+      <label for="{{ form.Contact_no.id_for_label }}"></label>
+      {{ form.Contact_no|as_crispy_field }}
+    </div>
+    <div class="form-group">
+    <label for="{{ form.Project.id_for_label }}">Project</label>
+    <select id="projectSelect" name="Project" class="form-control" onchange="updateSiteOptions()">
+      {% for project in form.Project.field.queryset %}
+          <option value="{{ project.Project_ID }}" {% if project.Project_ID == user.Project.Project_ID %} selected {% endif %}>
+              {{ project.Project_Name }}
+          </option>
+      {% endfor %}
+  </select>
+</div>
+  
+    <div class="form-group">
+      <label for="siteSelect">Site:</label>
+      <select id="siteSelect" name="Site" class="form-control">
+          <option value="" disabled selected>Select a Project first</option>
+      </select>
+      {% if form.Site.errors %}
+          <span class="help-block">{{ form.Site.errors }}</span>
+      {% endif %}
+    </div>
+
+    <div class="form-group">
+      <label for="{{ form.is_user.id_for_label }}"></label>
+      {{ form.is_user|as_crispy_field }}
+    </div>
+    <div class="form-group">
+      <label for="{{ form.is_Administrator.id_for_label }}"></label>
+      {{ form.is_Administrator|as_crispy_field }}
+    </div>
+
+    <div class="form-group">
+      <label for="{{ form.password1.id_for_label }}"></label>
+      {{ form.password1|as_crispy_field }}
+    </div>
+
+    <div class="form-group">
+      <label for="{{ form.password2.id_for_label }}"></label>
+      {{ form.password2|as_crispy_field }}
+    </div>
+
+  </div>
+
+  <button class="btn btn-primary">Submit</button>
+</form>
+
+<hr>
+<h2>All Registered User</h2>
+<p>Search User :
+  <input id="myInput" type="text" placeholder="Search Username ">
+</p>
+<br>
+
+<table class="table table-responsive-sm table">
+  <thead>
+      <tr>
+          <th>User ID</th>
+          <th>Username</th>
+          <th>Email</th>
+          <th>Contact Number</th>
+          <th>Project</th>
+          <th>Site</th>
+          <th>Is User</th>
+          <th>Is Administrator</th>
+          <th>Edit</th>
+          <th>Delete</th>
+      </tr>
+  </thead>
+  <tbody id="myTable">
+      {% for user in custom_users %}
+      <tr>
+          <td >{{ user.User_ID }}</td>
+          <td>{{ user.username }}</td>
+          <td>{{ user.email }}</td>
+          <td>{{ user.Contact_no }}</td>
+          <td>{{ user.Project }}</td>
+          <td>{{ user.Site }}</td>
+          <td>{{ user.is_user }}</td>
+          <td>{{ user.is_Administrator }}</td>
+          {% if request.user.username == user.username %}
+            <td></td>
+          {% else %}
+          <td><a class="btn btn-primary" href="{% url 'edit_user' user.User_ID %}">Edit</a></td>
+          <td><a class="btn btn-danger" href="{% url 'delete_user' user.User_ID %}" onclick="return confirmDelete();">Delete</a></td>
+          {%endif%}
+      </tr>
+      {% endfor %}
+  </tbody>
+</table>
+<script>
+    $(document).ready(function () {
+      $("#myInput").on("keyup", function () {
+        var value = $(this).val().toLowerCase();
+        $("#myTable tr").filter(function () {
+          $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+        });
+      });
+    });
+
+  function confirmDelete() {
+      return confirm("Are you sure you want to delete user?");
+    }
+  function updateSiteOptions() {
+      var projectId = document.getElementById("projectSelect").value;
+      var siteSelect = document.getElementById("siteSelect");
+      var siteOptions = [
+          // Placeholder option
+          '<option value="" disabled selected>Select a Site</option>'
+      ];
+
+      // Fetch sites for the selected project using an API endpoint
+      fetch(`/get_sites_for_project/${projectId}/`)
+          .then(response => response.json())
+          .then(data => {
+              data.sites.forEach(site => {
+                  // Append site options to the list
+                  siteOptions.push(`<option value="${site.id}">${site.name}</option>`);
+              });
+              
+              // Set the innerHTML of the site dropdown to update options
+              siteSelect.innerHTML = siteOptions.join('');
+          });
+  }
+
+  // Initial call to populate site options based on the default selection
+  updateSiteOptions();
+</script>
+
+{% else %}
+<!-- Content for users who are not authenticated -->
+<p>You are not Authorized</p>
+{% endif %}
+
+{% endblock%}
